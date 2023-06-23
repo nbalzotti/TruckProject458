@@ -4,7 +4,11 @@ class Warehouse:
         self.y = y
         self.products = []
         self.trucks = []
-
+        self.node = None
+        
+    def assign_node(self, node):
+        self.node = node
+        
     def store_product(self, product):
         # Don't know what product will be yet but it will probably store an id, some stats, and a quantity
         self.products.append(product)
@@ -29,3 +33,4 @@ class Warehouse:
         # Remove the truck
         self.trucks.remove(truck)
         return truck
+    

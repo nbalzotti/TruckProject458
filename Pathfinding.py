@@ -6,10 +6,8 @@ from Node import nodeDistance
 from Road import Road
 def reconstructPath( cameFrom, current):
     totalPath = []
-    print("current id ", current.id)
     totalPath.append(current)
     while str(current.id) in cameFrom.keys():
-        print( "current is", current)
         current = cameFrom[str(current.id)]
         totalPath.insert(0,current)
     return totalPath
@@ -23,8 +21,19 @@ def findLowestFval(set) -> Node:
             lowestNode = currNode
     return lowestNode
 
+def calculate_speed_score(speed_limit):
+    max_speed_limit = 60.0
+    min_speed_limit = 0.0
+    max_score = 0.0
+    min_score = 0.3
+    # Clamp speed limit between 0 and 120
+    clamped_speed_limit = max(min_speed_limit, min(max_speed_limit, speed_limit))
+    # Calculate score using linear interpolation
+    score = ((max_score - min_score) / (max_speed_limit - min_speed_limit)) * (clamped_speed_limit - min_speed_limit) + min_score
+    return score
 
 def aStar(start : Node, goal : Node):
+    #print("got to aStar")
     ##For node n, cameFrom[n] is the node immediately preceding it on the cheapest path from the start
     ## to n currently known.
     cameFrom = {}
@@ -46,6 +55,7 @@ def aStar(start : Node, goal : Node):
     openSet.append(start)
     
     #while openSet is not empty
+    #print(len(openSet))
     while len(openSet) != 0:
         ## This operation can occur in O(Log(N)) time if openSet is a min-heap or a priority queue
         ## current := the node in openSet having the lowest fScore[] value
@@ -57,10 +67,15 @@ def aStar(start : Node, goal : Node):
             return reconstructPath(cameFrom, current)
         openSet.remove(current)
         if str(current.id) not in gScore:
-            gScore[str(current.id)] = nodeDistance(current, goal)
+            current_road = None
+            for road in current.edges:
+                    if road.get_other_node(current).id == cameFrom[str(current.id)].id:
+                        current_road = road
+            gScore[str(current.id)] = nodeDistance(current, goal) + calculate_speed_score(road.speed_limit)
             fScore[str(current.id)] = current.fScore
         ##for each neighbor of current
         #print("CurrentId is" , current.id)
+        #print(len(current.edges))
         for neighbor in current.edges:
             neighborNode = neighbor.get_other_node(current)
             ## if neighbor id is not mapped into gScore then add to gscore and fscore
@@ -128,3 +143,4 @@ if __name__ == "__main__":
     print("Length of path is: ", len(testPath))
     for i in range(len(testPath)):
         print(testPath[i].id)
+        

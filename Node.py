@@ -9,6 +9,7 @@ class Node:
         self.hScore = 500000000
         self.fScore = 500000000
         self.store = None
+        self.warehouse = None
     #returns from current node to end node 
     #the absolute distance not from node to node 
     def setHscore(self, end):
@@ -23,7 +24,7 @@ class Node:
         
     def assign_warehouse(self, warehouse):
         # kind of the same thing as store, I made it different for readability
-        self.store = warehouse
+        self.warehouse = warehouse
     
 #function that returns the location distance not the time it will take
 def nodeDistance(fromNode, toNode) -> float:

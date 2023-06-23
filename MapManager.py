@@ -16,6 +16,7 @@ class MapManager:
         self.lon = lon
         self.dist = dist
         self.Y = Y
+        self.warehouse = None
         self.stores = []
         self.nodes = []
         self.roads = []
@@ -39,7 +40,10 @@ class MapManager:
         result = api.query(query)
         real_store_locations = [(float(way.center_lon), float(way.center_lat)) for way in result.ways]
         random_stores = random.sample(real_store_locations, min(self.Y, len(real_store_locations)))
-        self.stores = [Store(x=store[0], y=store[1]) for store in random_stores]
+        i = 1
+        for store in random_stores:
+            self.stores.append(Store("Store" + str(i), x=store[0], y=store[1]))
+            i += 1
 
     def create_nodes(self):
         for node in self.graph:
@@ -61,32 +65,54 @@ class MapManager:
         for store in self.stores:
             nearest_node = self.get_nearest_node(store.x, store.y)
             nearest_node.assign_store(store)
+            store.assign_node(nearest_node)
             
     def assign_warehouse_to_node(self):
         # Assigning the warehouse to the nearest node to the center of the map
         warehouse_node = self.get_nearest_node(self.lon, self.lat)
         self.warehouse = Warehouse(warehouse_node.x, warehouse_node.y)
         warehouse_node.assign_warehouse(self.warehouse)
+        self.warehouse.assign_node(warehouse_node)
+
+
+    def get_speed_limit(self, speed_limit_str):
+        try:
+            # Split by space and take the first part, then convert to int
+            speed_limit = int(speed_limit_str.split(" ")[0])
+            speed_limit = speed_limit * 0.45
+        except (ValueError, TypeError, AttributeError):
+            # If conversion fails (because of non-numeric string, None, etc.), return 30 mph aka 13.4 meters per second
+            speed_limit = 13.4
+            
+        if speed_limit > 59:
+            return 13.4
+        return speed_limit
 
     def create_roads(self):
         for u, v, data in self.graph.edges(keys=False, data=True):
             start_node = next((node for node in self.nodes if node.id == u), None)
             end_node = next((node for node in self.nodes if node.id == v), None)
             length = data['length']
-            road = Road(u, start_node, end_node, length=length)
+            speed_limit = self.get_speed_limit(data.get('maxspeed'))
+            road = Road(u, start_node, end_node, length, speed_limit)
+            start_node.edges.append(road)
+            end_node.edges.append(road)
             self.roads.append(road)
             
     def create_truck(self):
         # Temporary function to make trucks for the sake of testing display, this should probably be done in warehouse later
-        truck = Truck(self.warehouse.x, self.warehouse.y, 5, 5)
+        truck = Truck("Truck" + str(len(self.trucks) + 1), self.warehouse.x, self.warehouse.y, 20000, 30, self.warehouse, max_allowed_speed=40)
+        truck.current_node = self.warehouse.node
+        truck.standby_at_warehouse = self.warehouse
         self.trucks.append(truck)
         
-    def generate_map(self):
+    def generate_map(self, truck_amount):
         self.fetch_map()
         self.create_nodes()
         self.assign_stores_to_nodes()
         self.assign_warehouse_to_node()
-        self.create_truck()
+        for i in range(truck_amount):
+            self.create_truck()
         self.create_roads()
         
         # Temporary traffic for testing
@@ -96,7 +122,7 @@ class MapManager:
     def get_map(self):
         return self.graph, self.nodes, self.stores, self.roads
     
-    def display_map(self):
+    def display_map(self, showplot=False):
         nc = ['g' if node.store is not None else 'b' for node in self.nodes]
 
         # Assign sizes to nodes
@@ -126,5 +152,9 @@ class MapManager:
             truck_marker = plt.scatter(truck.x, truck.y, c='y', s=50, marker='p')
             ax.add_artist(truck_marker)
 
+
+        if(showplot == True):
+            plt.show()
         plt.savefig('map.png')  # Save the map to a file
         plt.close()  # Close the plot to free up memory
+        

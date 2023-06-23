@@ -1,12 +1,13 @@
 from Node import nodeDistance
 from Node import Node
 class Road:
-    def __init__(self, id, node1, node2, length, traffic=0):
+    def __init__(self, id, node1, node2, length, speed_limit, traffic=0):
         self.id = id
         self.node1 = node1
         self.node2 = node2
         self.traffic = traffic  # A measure of the congestion on this road, modify as needed
         self.length = length
+        self.speed_limit = speed_limit
     #get the g score or the length between these that use this road or edge
     def edgeLength(self):
         return nodeDistance(self.node1, self.node2)

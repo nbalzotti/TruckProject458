@@ -1,46 +1,20 @@
-from MapManager import MapManager
-import random
-import time
-from PIL import Image, ImageTk
-import tkinter as tk
-import threading
+from Simulation import Simulation
+
 
 def main():
-    lat, lon = 47.6097, -122.3331
-    dist = 2000  # This is in meters
-    Y = 20  # Max number of stores
-    
-    # Initialize map manager
-    map_manager = MapManager(lat, lon, dist, Y)
-    map_manager.generate_map()
+    # These parameters need to be defined or generated
+    lat, lon = 47.6297, -122.3331   #original coordinates
+    #lat, lon = 47.6597, -122.3431
+    dist = 2000
+    Y = 10
 
-    # Create a tkinter window
-    window = tk.Tk()
+    # Create a new Simulation
+    simulation = Simulation(lat, lon, dist, Y, time_tick_amount=30, simulation_length=2000, truck_amount=2,max_simultaneous_delivery_count=2)
 
-    # Create a canvas to hold the image
-    canvas = tk.Canvas(window, width=1000, height=1000)
-    canvas.pack()
-    
-    map_manager.display_map()
-    img_path = 'map.png'  # path to your image file
-    update_image(canvas, img_path)
-
-    # Moving trucks to random nodes for testing purposes
-    for i in range(10):  # simulate 10 time ticks
-        print(f"Time tick: {i}")
-        for truck in map_manager.trucks:
-            random_node = random.choice(map_manager.nodes)
-            truck.update_position(random_node.x, random_node.y)
-        map_manager.display_map()  # This should save the map to 'map.png'
-        update_image(canvas, img_path)  # Update the displayed image
-
-    window.mainloop()  # Start the GUI event loop
-
-def update_image(canvas, img_path):
-    image = Image.open(img_path)
-    photo = ImageTk.PhotoImage(image)
-    canvas.create_image(0, 0, image=photo, anchor=tk.NW)
-    canvas.photo = photo
+    # Start the simulation
+    simulation.start()
+    # Run the simulation
+    simulation.run_simulation()
 
 
 if __name__ == "__main__":
